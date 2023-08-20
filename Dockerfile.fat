@@ -1,0 +1,21 @@
+# Use Alpine 3.11 as the base image
+FROM alpine:3.11
+
+# Copy all files to the container
+COPY . .
+
+# Update and install Python 2, pip for Python 2, Node.js, and npm
+RUN apk add --no-cache python2 py2-pip nodejs npm
+
+# Run npm install and npm build
+RUN npm install && \
+    npm run build
+
+# Install Python dependencies
+RUN pip install -r requirements.txt
+
+# Expose the port that your Flask app will listen on
+EXPOSE 5000
+
+# Set the entrypoint to run the app
+ENTRYPOINT ["python", "./app.py"]

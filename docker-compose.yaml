@@ -1,0 +1,49 @@
+version: '3'
+
+services:
+  web:
+    build:
+      #take the Dockerfile.thin from cur dir
+      context: .
+      dockerfile: Dockerfile.thin
+    environment:
+      - DEBUG=True
+    depends_on:
+      - es
+    networks:
+      - default
+    restart:
+      on-failure
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./static:/usr/share/nginx/html
+    networks:
+      - default
+
+  es:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.3.2
+    container_name: es
+    environment:
+      - discovery.type=single-node
+    ports:
+      - 9200:9200
+    volumes:
+      - esdata1:/usr/share/elasticsearch/data
+    networks:
+      - default
+#The bridge network allows containers connected to the same bridge network to communicate,
+#while isolating them from containers not connected to that bridge network
+#Containers connected to the bridge network can access external networks by default
+networks:
+  default:
+    driver: bridge
+#Defines a named volume esdata1 with the local storage driver.
+#This will store data on the host file system in a specific Docker-managed location
+volumes:
+    esdata1:
+      driver: local

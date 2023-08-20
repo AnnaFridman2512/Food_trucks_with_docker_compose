@@ -1,0 +1,35 @@
+# ---- Build Stage ----
+FROM alpine:3.11 AS build-stage
+
+# Copy all files to the container
+COPY . .
+
+# Update and install Python 2, pip for Python 2, Node.js, and npm
+RUN apk add --no-cache python2 py2-pip nodejs npm
+
+# Run npm install and npm build
+RUN npm install && \
+    npm run build
+
+# Install Python dependencies directly
+RUN pip install --no-cache-dir -r requirements.txt
+
+
+# ---- Production Stage ----
+FROM alpine:3.11 AS production-stage
+
+# Copy only necessary files and folders from the build stage
+# Takes care of copying over all the Python packages you installed in the build-stage
+COPY --from=build-stage /usr/lib/python2.7/site-packages /usr/lib/python2.7/site-packages
+COPY --from=build-stage ./app.py ./app.py
+COPY --from=build-stage ./static ./static
+COPY --from=build-stage ./templates ./templates
+
+# Install only the runtime dependencies for Python
+RUN apk add --no-cache python2
+
+# Expose the port that your Flask app will listen on
+EXPOSE 5000
+
+# Set the entrypoint to run the app
+ENTRYPOINT ["python", "./app.py"]
